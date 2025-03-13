@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery - 主页</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html" class="active">主页</a>
+        <a href="vocab.html">词汇</a>
+        <a href="speaking.html">口语</a>
+        <a href="listening.html">听力</a>
+        <a href="writing.html">写作</a>
+        <a href="history.html">历史</a>
+    </nav>
+    <h1>English Mastery</h1>
+    <div class="section">
+        <h2>学习计划 (第 <span id="dayNum"></span> 天 / 180)</h2>
+        <p>词汇量: <span id="vocabCount">0</span> / 3000 | 熟练: <span id="masteredCount">0</span></p>
+        <progress id="vocabProgress" max="3000" value="0"></progress>
+        <p>今日: <span id="date"></span> | 进度: <span id="progress">0%</span> | 时长: <span id="timeSpent">0</span> 分钟</p>
+        <p>阶段: <span id="phase"></span></p>
+        <button onclick="resetPlan()">重置今日</button>
+    </div>
+    <div class="section">
+        <h2>每日任务 (2小时)</h2>
+        <p>词汇 (35分钟): 复习20个旧词，学习5个新词</p>
+        <p>口语 (25分钟): 练习3个对话</p>
+        <p>听力 (30分钟): 完成1段音频测验</p>
+        <p>写作 (30分钟): 写2个句子并核对</p>
+        <p id="badge" class="badge"></p>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        function updateUI() {
+            const daily = getDailyContent();
+            daily.words.forEach(w => { if (!vocab.some(v => v.text === w.word)) vocab.push({ text: w.word, phonetics: w.phonetics, meaning: w.meaning, sentence: w.sentence, mastery: 'learning', added: today }); });
+            document.getElementById('vocabCount').textContent = vocab.length;
+            document.getElementById('masteredCount').textContent = vocab.filter(w => w.mastery === 'mastered').length;
+            document.getElementById('vocabProgress').value = vocab.length;
+            document.getElementById('date').textContent = today;
+            document.getElementById('dayNum').textContent = dayNum;
+            let totalGoal = 20 + 5 + 3 + daily.audio.quiz.length + daily.writing.prompts.length;
+            let completed = plan.review + plan.new + plan.speaking + plan.listening + plan.writing;
+            document.getElementById('progress').textContent = `${Math.round((completed / totalGoal) * 100)}%`;
+            document.getElementById('phase').textContent = dayNum <= 60 ? "基础 (第1-2月)" : dayNum <= 120 ? "中级 (第3-4月)" : "冲刺 (第5-6月)";
+            document.getElementById('badge').textContent = completed === totalGoal ? "🎉 今日完成徽章！" : "";
+            saveData();
+        }
+
+        function resetPlan() {
+            plan = { date: today, review: 0, new: 0, speaking: 0, listening: 0, writing: 0, time: 0 };
+            vocab.forEach(w => w.mastery = 'learning');
+            saveData();
+            updateUI();
+        }
+
+        if (plan.date !== today) {
+            history.push({ date: plan.date, progress: { ...plan } });
+            resetPlan();
+        }
+        updateUI();
+
+        document.querySelectorAll('nav a').forEach(link => {
+            link.classList.toggle('active', link.href.includes(location.pathname));
+        });
+    </script>
+</body>
+</html>

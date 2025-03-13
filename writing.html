@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery - 写作</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">主页</a>
+        <a href="vocab.html">词汇</a>
+        <a href="speaking.html">口语</a>
+        <a href="listening.html">听力</a>
+        <a href="writing.html" class="active">写作</a>
+        <a href="history.html">历史</a>
+    </nav>
+    <h1>写作练习 (30分钟)</h1>
+    <div class="section">
+        <h2>今日任务</h2>
+        <ol id="prompts"></ol>
+        <textarea id="answers" placeholder="每行输入一个答案"></textarea>
+        <button onclick="checkAnswers()">核对</button>
+        <div id="result" class="hidden"></div>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        function updateUI() {
+            const daily = getDailyContent();
+            const prompts = document.getElementById('prompts');
+            prompts.innerHTML = daily.writing.prompts.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('answers').value = localStorage.getItem('writing') || '';
+        }
+
+        function checkAnswers() {
+            const daily = getDailyContent();
+            const input = document.getElementById('answers').value.trim().split('\n');
+            let correct = 0;
+            let result = [];
+            daily.writing.answers.forEach((ans, i) => {
+                const userAns = input[i] ? input[i].trim() : '';
+                if (userAns.toLowerCase() === ans.toLowerCase()) {
+                    correct++;
+                } else {
+                    result.push(`第${i+1}题: 你的答案 "${userAns}" 不正确。正确答案: "${ans}"。提示: ${daily.writing.tip[i]}`);
+                }
+            });
+            plan.writing = correct;
+            document.getElementById('result').innerHTML = `得分: ${correct}/${daily.writing.answers.length}<br>${result.length ? '解析:<br>' + result.join('<br>') : '全对！'}`;
+            document.getElementById('result').classList.remove('hidden');
+            localStorage.setItem('writing', input.join('\n'));
+            saveData();
+            updateUI();
+        }
+
+        updateUI();
+        document.querySelectorAll('nav a').forEach(link => {
+            link.classList.toggle('active', link.href.includes(location.pathname));
+        });
+    </script>
+</body>
+</html>

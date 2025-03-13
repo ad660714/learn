@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery - 口语</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">主页</a>
+        <a href="vocab.html">词汇</a>
+        <a href="speaking.html" class="active">口语</a>
+        <a href="listening.html">听力</a>
+        <a href="writing.html">写作</a>
+        <a href="history.html">历史</a>
+    </nav>
+    <h1>口语练习 (25分钟)</h1>
+    <div class="section">
+        <h2>今日对话</h2>
+        <ul id="dialogues"></ul>
+        <audio id="recording" controls class="hidden"></audio>
+        <button onclick="startRecording()">开始录音</button>
+        <button onclick="stopRecording()">停止录音</button>
+        <button onclick="plan.speaking = 3; saveData(); updateUI();">标记完成</button>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        let mediaRecorder, audioBlob;
+
+        function updateUI() {
+            const daily = getDailyContent();
+            const dialogues = document.getElementById('dialogues');
+            dialogues.innerHTML = daily.speaking.map(d => `
+                <li>
+                    <strong>Q:</strong> ${d.q} <button onclick="speak('${d.q}')">发音</button><br>
+                    <strong>A:</strong> ${d.a} <button onclick="speak('${d.a}')">发音</button>
+                </li>
+            `).join('');
+        }
+
+        async function startRecording() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            const chunks = [];
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                document.getElementById('recording').src = URL.createObjectURL(audioBlob);
+                document.getElementById('recording').classList.remove('hidden');
+            };
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+
+        updateUI();
+        document.querySelectorAll('nav a').forEach(link => {
+            link.classList.toggle('active', link.href.includes(location.pathname));
+        });
+    </script>
+</body>
+</html>
