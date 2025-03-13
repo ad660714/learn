@@ -24,35 +24,222 @@
         <p>阶段: <span id="phase"></span></p>
         <button onclick="resetPlan()">重置今日</button>
     </div>
+
+    <!-- 词汇学习 -->
     <div class="section">
-        <h2>每日任务 (2小时)</h2>
-        <p>词汇 (35分钟): 复习20个旧词，学习5个新词</p>
-        <p>口语 (25分钟): 练习3个对话</p>
-        <p>听力 (30分钟): 完成1段音频测验</p>
-        <p>写作 (30分钟): 写2个句子并核对</p>
-        <p id="badge" class="badge"></p>
+        <h2>词汇学习 (35分钟)</h2>
+        <h3>今日新词</h3>
+        <div class="card-container" id="dailyWords"></div>
+        <h3>复习旧词</h3>
+        <div class="card-container" id="reviewList"></div>
     </div>
+
+    <!-- 口语练习 -->
+    <div class="section">
+        <h2>口语练习 (25分钟)</h2>
+        <ul id="dialogues"></ul>
+        <audio id="recording" controls class="hidden"></audio>
+        <button onclick="startRecording()">开始录音</button>
+        <button onclick="stopRecording()">停止录音</button>
+        <button onclick="markSpeakingComplete()">标记完成</button>
+    </div>
+
+    <!-- 听力练习 -->
+    <div class="section">
+        <h2>听力练习 (30分钟)</h2>
+        <p id="audioText"></p>
+        <button onclick="speak(document.getElementById('audioText').textContent)">播放音频</button>
+        <div id="quiz"></div>
+        <button onclick="checkQuiz()">提交答案</button>
+        <div id="quizResult" class="hidden"></div>
+    </div>
+
+    <!-- 写作练习 -->
+    <div class="section">
+        <h2>写作练习 (30分钟)</h2>
+        <ol id="prompts"></ol>
+        <textarea id="answers" placeholder="每行输入一个答案"></textarea>
+        <button onclick="checkAnswers()">核对</button>
+        <div id="result" class="hidden"></div>
+    </div>
+
+    <p id="badge" class="badge"></p>
+
     <script src="scripts.js"></script>
     <script>
+        let mediaRecorder, audioBlob;
+
         function updateUI() {
             const daily = getDailyContent();
-            daily.words.forEach(w => { if (!vocab.some(v => v.text === w.word)) vocab.push({ text: w.word, phonetics: w.phonetics, meaning: w.meaning, sentence: w.sentence, mastery: 'learning', added: today }); });
+
+            // 更新计划
             document.getElementById('vocabCount').textContent = vocab.length;
             document.getElementById('masteredCount').textContent = vocab.filter(w => w.mastery === 'mastered').length;
             document.getElementById('vocabProgress').value = vocab.length;
             document.getElementById('date').textContent = today;
             document.getElementById('dayNum').textContent = dayNum;
-            let totalGoal = 20 + 5 + 3 + daily.audio.quiz.length + daily.writing.prompts.length;
-            let completed = plan.review + plan.new + plan.speaking + plan.listening + plan.writing;
-            document.getElementById('progress').textContent = `${Math.round((completed / totalGoal) * 100)}%`;
+            const totalGoal = 20 + 5 + 3 + (daily.audio.quiz?.length || 0) + (daily.writing.prompts?.length || 0);
+            const completed = Math.min(plan.review, 20) + plan.new + plan.speaking + plan.listening + plan.writing;
+            document.getElementById('progress').textContent = totalGoal ? `${Math.round((completed / totalGoal) * 100)}%` : '0%';
+            document.getElementById('timeSpent').textContent = plan.time;
             document.getElementById('phase').textContent = dayNum <= 60 ? "基础 (第1-2月)" : dayNum <= 120 ? "中级 (第3-4月)" : "冲刺 (第5-6月)";
-            document.getElementById('badge').textContent = completed === totalGoal ? "🎉 今日完成徽章！" : "";
+            document.getElementById('badge').textContent = completed >= totalGoal ? "🎉 今日完成徽章！" : "";
+
+            // 词汇 - 新词
+            const dailyList = document.getElementById('dailyWords');
+            dailyList.innerHTML = '';
+            daily.words.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">${item.word}<br><button onclick="speak('${item.word}')">发音</button></div>
+                        <div class="card-back">${item.phonetics}<br>${item.meaning}<br>${item.sentence}</div>
+                    </div>`;
+                div.onclick = (e) => { if (e.target.tagName !== 'BUTTON') div.classList.toggle('flipped'); };
+                dailyList.appendChild(div);
+                if (!vocab.some(v => v.text === item.word)) {
+                    vocab.push({ text: item.word, phonetics: item.phonetics, meaning: item.meaning, sentence: item.sentence, mastery: 'learning', added: today });
+                    plan.new = Math.min(plan.new + 1, 5);
+                }
+            });
+
+            // 词汇 - 复习
+            const reviewList = document.getElementById('reviewList');
+            reviewList.innerHTML = '';
+            const reviewWords = vocab.filter(w => w.added !== today).slice(0, 20);
+            reviewWords.forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">${w.text}<br><button onclick="speak('${w.text}')">发音</button></div>
+                        <div class="card-back">${w.phonetics}<br>${w.meaning}<br>${w.sentence}<br><select onchange="updateMastery('${w.text}', this.value)"><option value="learning" ${w.mastery === 'learning' ? 'selected' : ''}>学习中</option><option value="mastered" ${w.mastery === 'mastered' ? 'selected' : ''}>熟练</option></select></div>
+                    </div>`;
+                div.onclick = (e) => {
+                    if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT') {
+                        div.classList.toggle('flipped');
+                        if (w.mastery === 'learning' && !div.dataset.counted) {
+                            plan.review = Math.min(plan.review + 1, 20);
+                            div.dataset.counted = 'true';
+                            saveData();
+                            updateUI();
+                        }
+                    }
+                };
+                reviewList.appendChild(div);
+            });
+
+            // 口语
+            const dialogues = document.getElementById('dialogues');
+            dialogues.innerHTML = daily.speaking.map(d => `
+                <li>
+                    <strong>Q:</strong> ${d.q} <button onclick="speak('${d.q}')">发音</button><br>
+                    <strong>A:</strong> ${d.a} <button onclick="speak('${d.a}')">发音</button>
+                </li>
+            `).join('');
+
+            // 听力
+            document.getElementById('audioText').textContent = daily.audio.text;
+            const quiz = document.getElementById('quiz');
+            quiz.innerHTML = daily.audio.quiz.map((q, i) => `
+                <p>${q.q}</p>
+                ${q.opts.map((opt, j) => `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label>`).join('<br>')}
+            `).join('<br>');
+
+            // 写作
+            const prompts = document.getElementById('prompts');
+            prompts.innerHTML = daily.writing.prompts.map(p => `<li>${p}</li>`).join('');
+            document.getElementById('answers').value = localStorage.getItem('writing') || '';
+
             saveData();
         }
 
         function resetPlan() {
-            plan = { date: today, review: 0, new: 0, speaking: 0, listening: 0, writing: 0, time: 0 };
-            vocab.forEach(w => w.mastery = 'learning');
+            if (confirm('确定重置今日进度吗？')) {
+                history.push({ date: plan.date, progress: { ...plan } });
+                plan = { date: today, review: 0, new: 0, speaking: 0, listening: 0, writing: 0, time: 0 };
+                vocab.forEach(w => w.mastery = 'learning');
+                localStorage.removeItem('writing');
+                saveData();
+                updateUI();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                const chunks = [];
+                mediaRecorder.ondataavailable = e => chunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                    document.getElementById('recording').src = URL.createObjectURL(audioBlob);
+                    document.getElementById('recording').classList.remove('hidden');
+                };
+                document.querySelector('button[onclick="startRecording()"]').disabled = true;
+                document.querySelector('button[onclick="stopRecording()"]').disabled = false;
+            } catch (err) {
+                alert('录音失败: ' + err.message);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                document.querySelector('button[onclick="startRecording()"]').disabled = false;
+                document.querySelector('button[onclick="stopRecording()"]').disabled = true;
+            }
+        }
+
+        function markSpeakingComplete() {
+            plan.speaking = 3;
+            saveData();
+            updateUI();
+        }
+
+        function checkQuiz() {
+            const daily = getDailyContent();
+            let correct = 0;
+            daily.audio.quiz.forEach((q, i) => {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                if (selected && parseInt(selected.value) === q.ans) correct++;
+            });
+            plan.listening = correct;
+            document.getElementById('quizResult').innerHTML = `得分: ${correct}/${daily.audio.quiz.length}`;
+            document.getElementById('quizResult').classList.remove('hidden');
+            saveData();
+            updateUI();
+        }
+
+        function checkAnswers() {
+            const daily = getDailyContent();
+            const input = document.getElementById('answers').value.trim().split('\n');
+            let correct = 0;
+            let result = [];
+            daily.writing.answers.forEach((ans, i) => {
+                const userAns = input[i] ? input[i].trim() : '';
+                if (userAns.toLowerCase() === ans.toLowerCase()) {
+                    correct++;
+                    result.push(`第${i+1}题: 正确！`);
+                } else {
+                    const tip = daily.writing.tip && daily.writing.tip[i] ? daily.writing.tip[i] : "请检查语法和词汇。";
+                    result.push(`第${i+1}题: 你的答案 "${userAns}" 不正确。正确答案: "${ans}"。提示: ${tip}`);
+                }
+            });
+            plan.writing = correct;
+            document.getElementById('result').innerHTML = `得分: ${correct}/${daily.writing.answers.length}<br>${result.join('<br>')}`;
+            document.getElementById('result').classList.remove('hidden');
+            localStorage.setItem('writing', input.join('\n'));
+            saveData();
+            updateUI();
+        }
+
+        function updateMastery(word, mastery) {
+            const w = vocab.find(v => v.text === word);
+            if (w) w.mastery = mastery;
             saveData();
             updateUI();
         }
