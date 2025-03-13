@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery - 词汇</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">主页</a>
+        <a href="vocab.html">词汇</a>
+        <a href="speaking.html">口语</a>
+        <a href="listening.html">听力</a>
+        <a href="exercise.html">练习</a>
+        <a href="history.html">历史</a>
+    </nav>
+    <h1>词汇学习</h1>
+    <div class="section">
+        <h2>复习旧词 (20分钟)</h2>
+        <div class="card-container" id="reviewList"></div>
+    </div>
+    <div class="section">
+        <h2>今日新词 (15分钟)</h2>
+        <div class="card-container" id="dailyWords"></div>
+    </div>
+    <div class="section">
+        <h2>管理词汇</h2>
+        <form id="addWordForm">
+            <input type="text" id="wordInput" placeholder="单词 (e.g., help)" required>
+            <input type="text" id="phoneticsInput" placeholder="音标 (e.g., /help/)" required>
+            <input type="text" id="meaningInput" placeholder="翻译 (e.g., 帮助)" required>
+            <textarea id="sentenceInput" placeholder="例句 (e.g., Can you help me?)" required></textarea>
+            <button type="submit">添加单词</button>
+        </form>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        function updateUI() {
+            const daily = getDailyContent();
+
+            // 复习区
+            const reviewList = document.getElementById('reviewList');
+            reviewList.innerHTML = '';
+            vocab.filter(w => w.added !== today).slice(0, 55).forEach(w => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">${w.text}<br><button onclick="speak('${w.text}')">发音</button></div>
+                        <div class="card-back">${w.phonetics || '无音标'}<br>${w.meaning || '未知'}<br>${w.sentence || ''}<br><select onchange="updateMastery('${w.text}', this.value)"><option value="learning" ${w.mastery === 'learning' ? 'selected' : ''}>学习中</option><option value="mastered" ${w.mastery === 'mastered' ? 'selected' : ''}>熟练</option></select><br><button class="delete" onclick="deleteWord('${w.text}')">删除</button></div>
+                    </div>`;
+                div.onclick = (e) => { if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT') div.classList.toggle('flipped'); if (w.mastery === 'learning') { plan.review++; updateUI(); } };
+                reviewList.appendChild(div);
+            });
+
+            // 新词区
+            const dailyList = document.getElementById('dailyWords');
+            dailyList.innerHTML = '';
+            daily.words.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div class="card-inner">
+                        <div class="card-front">${item.word}<br><button onclick="speak('${item.word}')">发音</button></div>
+                        <div class="card-back">${item.phonetics}<br>${item.meaning}<br>${item.sentence}</div>
+                    </div>`;
+                div.onclick = (e) => { if (e.target.tagName !== 'BUTTON') div.classList.toggle('flipped'); };
+                dailyList.appendChild(div);
+                if (!vocab.some(v => v.text === item.word)) vocab.push({ text: item.word, phonetics: item.phonetics, meaning: item.meaning, sentence: item.sentence, mastery: 'learning', added: today });
+            });
+            plan.new = 5;
+
+            saveData();
+        }
+
+        function updateMastery(word, mastery) {
+            const w = vocab.find(v => v.text === word);
+            w.mastery = mastery;
+            saveData();
+            updateUI();
+        }
+
+        function deleteWord(word) {
+            if (confirm(`确认删除 "${word}" 吗？`)) {
+                vocab = vocab.filter(w => w.text !== word);
+                saveData();
+                updateUI();
+            }
+        }
+
+        document.getElementById('addWordForm').onsubmit = (e) => {
+            e.preventDefault();
+            const word = document.getElementById('wordInput').value.trim();
+            const phonetics = document.getElementById('phoneticsInput').value.trim();
+            const meaning = document.getElementById('meaningInput').value.trim();
+            const sentence = document.getElementById('sentenceInput').value.trim();
+            if (word && phonetics && meaning && sentence && !vocab.some(w => w.text === word)) {
+                vocab.push({ text: word, phonetics, meaning, sentence, mastery: 'learning', added: today });
+                saveData();
+                updateUI();
+                e.target.reset();
+            } else {
+                alert('请填写所有字段，且单词不能重复！');
+            }
+        };
+
+        updateUI();
+    </script>
+</body>
+</html>

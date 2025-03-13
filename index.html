@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Mastery - 主页</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">主页</a>
+        <a href="vocab.html">词汇</a>
+        <a href="speaking.html">口语</a>
+        <a href="listening.html">听力</a>
+        <a href="exercise.html">练习</a>
+        <a href="history.html">历史</a>
+    </nav>
+    <h1>English Mastery</h1>
+    <div class="section">
+        <h2>今日概览 (<span id="date"></span>)</h2>
+        <p>词汇量: <span id="vocabCount">0</span> / 3000 | 熟练: <span id="masteredCount">0</span></p>
+        <progress id="vocabProgress" max="3000" value="0"></progress>
+        <p>进度: <span id="progress">0%</span> | 时长: <span id="timeSpent">0</span> 分钟</p>
+        <button onclick="resetPlan()">重置今日</button>
+    </div>
+    <script src="scripts.js"></script>
+    <script>
+        function updateUI() {
+            const daily = getDailyContent();
+            daily.words.forEach(w => { if (!vocab.some(v => v.text === w.word)) vocab.push({ text: w.word, mastery: 'learning', added: today }); });
+            document.getElementById('vocabCount').textContent = vocab.length;
+            document.getElementById('masteredCount').textContent = vocab.filter(w => w.mastery === 'mastered').length;
+            document.getElementById('vocabProgress').value = vocab.length;
+            document.getElementById('date').textContent = today;
+            let totalGoal = Math.min(vocab.length, 55) + 5 + daily.audio.quiz.length + daily.exercises.prompts.length;
+            let completed = plan.review + plan.new + plan.quiz + plan.exercise;
+            document.getElementById('progress').textContent = `${Math.round((completed / totalGoal) * 100)}%`;
+            saveData();
+        }
+
+        function resetPlan() {
+            plan = { date: today, review: 0, new: 0, quiz: 0, exercise: 0, time: 0 };
+            vocab.forEach(w => w.mastery = 'learning');
+            saveData();
+            updateUI();
+        }
+
+        if (plan.date !== today) {
+            history.push({ date: plan.date, progress: { ...plan } });
+            resetPlan();
+        }
+        updateUI();
+    </script>
+</body>
+</html>
