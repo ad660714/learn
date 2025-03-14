@@ -1,0 +1,38 @@
+{
+    "foundation": [
+        {"word": "go", "zh": "去", "audio": "audio/go.mp3", "example": "I go to school."},
+        {"word": "eat", "zh": "吃", "audio": "audio/eat.mp3", "example": "I eat rice."},
+        {"word": "house", "zh": "房子", "audio": "audio/house.mp3", "example": "This is my house."},
+        {"word": "big", "zh": "大", "audio": "audio/big.mp3", "example": "The house is big."},
+        {"word": "small", "zh": "小", "audio": "audio/small.mp3", "example": "The room is small."},
+        // ... 共500个基础词汇
+        // 示例来源：日常动词、名词、形容词
+    ],
+    "daily_life": [
+        {"word": "buy", "zh": "买", "audio": "audio/buy.mp3", "example": "I buy food."},
+        {"word": "where", "zh": "哪里", "audio": "audio/where.mp3", "example": "Where is the shop?"},
+        {"word": "room", "zh": "房间", "audio": "audio/room.mp3", "example": "I need a room."},
+        {"word": "doctor", "zh": "医生", "audio": "audio/doctor.mp3", "example": "I see a doctor."},
+        {"word": "how", "zh": "怎么", "audio": "audio/how.mp3", "example": "How are you?"},
+        // ... 共500个生活词汇
+        // 示例来源：购物、问路、租房、就医场景
+    ],
+    "broadband": [
+        {"word": "router", "zh": "路由器", "audio": "audio/router.mp3", "example": "The router is on the table."},
+        {"word": "signal", "zh": "信号", "audio": "audio/signal.mp3", "example": "The signal is weak."},
+        {"word": "check", "zh": "检查", "audio": "audio/check.mp3", "example": "Please check the router."},
+        {"word": "weak", "zh": "弱", "audio": "audio/weak.mp3", "example": "The signal is weak."},
+        {"word": "restart", "zh": "重启", "audio": "audio/restart.mp3", "example": "Restart the router now."},
+        // ... 共500个职业词汇
+        // 示例来源：宽带安装术语、职场沟通
+    ],
+    "ielts": [
+        {"word": "study", "zh": "学习", "audio": "audio/study.mp3", "example": "I study English."},
+        {"word": "question", "zh": "问题", "audio": "audio/question.mp3", "example": "Answer the question."},
+        {"word": "write", "zh": "写", "audio": "audio/write.mp3", "example": "Write a sentence."},
+        {"word": "listen", "zh": "听", "audio": "audio/listen.mp3", "example": "Listen to the teacher."},
+        {"word": "describe", "zh": "描述", "audio": "audio/describe.mp3", "example": "Describe your home."},
+        // ... 共500个雅思词汇
+        // 示例来源：雅思听读写说核心词
+    ]
+}

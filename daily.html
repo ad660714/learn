@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日学习 - Step Up English</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-100 font-sans">
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between">
+            <h1 class="text-xl font-bold">Step Up English</h1>
+            返回首页
+        </div>
+    </nav>
+
+    <section class="container mx-auto py-10">
+        <h2 class="text-2xl font-bold mb-6 text-center">每日学习（1小时）</h2>
+
+        <!-- 单词部分 -->
+        <div id="words" class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="text-xl font-semibold mb-4">今日5个单词</h3>
+            <ul id="word-list" class="space-y-4"></ul>
+        </div>
+
+        <!-- 句子部分 -->
+        <div id="sentences" class="bg-white p-6 rounded shadow mb-6">
+            <h3 class="text-xl font-semibold mb-4">今日3个句子</h3>
+            <ul id="sentence-list" class="space-y-4"></ul>
+        </div>
+
+        <!-- 练习部分 -->
+        <div id="practice" class="bg-white p-6 rounded shadow">
+            <h3 class="text-xl font-semibold mb-4">句子练习</h3>
+            <div id="exercise-list" class="space-y-4"></div>
+            <button id="check-answers" class="bg-blue-500 text-white px-4 py-2 rounded mt-4 hover:bg-blue-700">检查答案</button>
+        </div>
+    </section>
+
+    <script src="js/data.js"></script>
+    <script src="js/daily.js"></script>
+</body>
+</html>
